@@ -28,16 +28,16 @@ Began 2026-10-22 · Source: paper pasted by student (Task 1 only so far)
 ## Items
 | ID | Item (paper wording) | Test (command → expected) | State |
 | --- | --- | --- | --- |
-| F1 | แสดงรายการจาก backend จริง (id,title,priority,status) ไม่ใช้ mock data | create via API → appears in UI; grep frontend for hard-coded tickets → none | ✅ local (node, no Docker) |
-| F2 | ฟอร์ม title + priority พร้อม label; สร้างแล้วเห็นใน API และ UI | POST → 201, GET lists it; form has `<label for>` | ✅ local (node, no Docker) |
-| F3 | ข้อความเมื่อไม่มีข้อมูล / เกิดข้อผิดพลาด | empty volume → empty message; backend down / 400 → error message | ✅ local (node, no Docker) |
-| F4 | เปลี่ยน status แต่ละรายการ บันทึกลง backend, refresh แล้วคงค่า | PATCH → 200; GET after reload shows new status | ✅ local (node, no Docker) |
-| F5 | กรอง all/open/doing/done ถูกต้อง | each filter shows only matching tickets | ✅ local (node, no Docker) |
-| C1 | id บวก ไม่ซ้ำ สร้างโดย backend | POST ×2 → ids differ, >0; client-sent id ignored | ✅ local (node, no Docker) |
-| C2 | title validation (trim, 1–80, string) | "", "   ", 81 chars, 123, missing → 400; 80 chars → 201 | ✅ local (node, no Docker) |
-| C3 | priority required, enum | missing / "urgent" → 400 | ✅ local (node, no Docker) |
-| C4 | status enum, default open, any→any | POST → status open; PATCH bad value → 400; done→open → 200 | ✅ local (node, no Docker) |
-| C5 | new volume → empty list | fresh volume GET → [] | ✅ local empty DATA_DIR; Docker volume ☐ |
+| F1 | แสดงรายการจาก backend จริง (id,title,priority,status) ไม่ใช้ mock data | create via API → appears in UI; grep frontend for hard-coded tickets → none | ✅ local + Docker |
+| F2 | ฟอร์ม title + priority พร้อม label; สร้างแล้วเห็นใน API และ UI | POST → 201, GET lists it; form has `<label for>` | ✅ local + Docker |
+| F3 | ข้อความเมื่อไม่มีข้อมูล / เกิดข้อผิดพลาด | empty volume → empty message; backend down / 400 → error message | ✅ local + Docker |
+| F4 | เปลี่ยน status แต่ละรายการ บันทึกลง backend, refresh แล้วคงค่า | PATCH → 200; GET after reload shows new status | ✅ local + Docker |
+| F5 | กรอง all/open/doing/done ถูกต้อง | each filter shows only matching tickets | ✅ local + Docker |
+| C1 | id บวก ไม่ซ้ำ สร้างโดย backend | POST ×2 → ids differ, >0; client-sent id ignored | ✅ local + Docker |
+| C2 | title validation (trim, 1–80, string) | "", "   ", 81 chars, 123, missing → 400; 80 chars → 201 | ✅ local + Docker |
+| C3 | priority required, enum | missing / "urgent" → 400 | ✅ local + Docker |
+| C4 | status enum, default open, any→any | POST → status open; PATCH bad value → 400; done→open → 200 | ✅ local + Docker |
+| C5 | new volume → empty list | fresh volume GET → [] | ✅ Docker fresh volume |
 
 ## Task 2 — API contract (added mid-exam)
 - "ให้กำหนดเลยว่าจะทำเกี่ยวกับแจ้งเตือนอะไร" → chosen theme: แจ้งปัญหาอุปกรณ์ไอทีในสำนักงาน (IT equipment issues)
@@ -46,12 +46,12 @@ Began 2026-10-22 · Source: paper pasted by student (Task 1 only so far)
 
 | ID | Request | Expected | Test | State |
 | --- | --- | --- | --- | --- |
-| A1 | GET /api/health | 200 `{"status":"ok"}` (paper: `{"status ok"}`, see Q5) | curl → body exact | ✅ local (node, no Docker) |
-| A2 | GET /api/tickets | 200 JSON array of all; empty → `[]` | fresh → `[]` | ✅ local (node, no Docker) |
-| A3 | POST /api/ticket(s) `{"title":"printer offline ","priority":"high"}` | 201 ticket, title=`printer offline`, id by server, status=open | curl | ✅ local (node, no Docker) |
-| A4 | PATCH /api/tickets/{id} `{"status":"doing"}` | 200 updated ticket, other fields unchanged; unknown id → 404 + JSON error object | curl | ✅ local (node, no Docker) |
-| A5 | invalid data | 400/422 + JSON error object with readable message; **data unchanged** | list identical before/after | ✅ local (node, no Docker) |
-| A6 | README with URL | README.md states http://localhost:8080 | grep | ✅ local (node, no Docker) |
+| A1 | GET /api/health | 200 `{"status":"ok"}` (paper: `{"status ok"}`, see Q5) | curl → body exact | ✅ local + Docker |
+| A2 | GET /api/tickets | 200 JSON array of all; empty → `[]` | fresh → `[]` | ✅ local + Docker |
+| A3 | POST /api/ticket(s) `{"title":"printer offline ","priority":"high"}` | 201 ticket, title=`printer offline`, id by server, status=open | curl | ✅ local + Docker |
+| A4 | PATCH /api/tickets/{id} `{"status":"doing"}` | 200 updated ticket, other fields unchanged; unknown id → 404 + JSON error object | curl | ✅ local + Docker |
+| A5 | invalid data | 400/422 + JSON error object with readable message; **data unchanged** | list identical before/after | ✅ local + Docker |
+| A6 | README with URL | README.md states http://localhost:8080 | grep | ✅ local + Docker |
 
 Validation cases (paper):
 - title empty/missing: `{"title":" ","priority":"low"}` or no title
@@ -64,12 +64,12 @@ Validation cases (paper):
 ## Task 3 — Docker + self-check (added mid-exam, with ภาพ 1)
 | ID | Item (paper wording) | Test | State |
 | --- | --- | --- | --- |
-| T1 | frontend และ backend คนละ container, Dockerfile แต่ละส่วน, `compose.yml` หรือ `docker-compose.yml` ที่ root | files exist; `docker compose ps` → 2 healthy | ☐ needs Docker |
-| T2 | ข้อมูลอยู่ที่ backend, Docker **named volume** เก็บข้อมูลถาวร (DB container optional; chose JSON file, no DB) | down/up + force-recreate keep data; `servicedesk_tickets` exists | ☐ needs Docker |
-| T3 | หลัง unzip สั่งคำสั่งแรกที่ root แล้วใช้งานได้ ไม่ต้องติดตั้ง runtime บน host | from clean copy: `docker compose up -d --build` → page works | ☐ needs Docker |
+| T1 | frontend และ backend คนละ container, Dockerfile แต่ละส่วน, `compose.yml` หรือ `docker-compose.yml` ที่ root | files exist; `docker compose ps` → 2 healthy | ✅ Docker |
+| T2 | ข้อมูลอยู่ที่ backend, Docker **named volume** เก็บข้อมูลถาวร (DB container optional; chose JSON file, no DB) | down/up + force-recreate keep data; `servicedesk_tickets` exists | ✅ Docker |
+| T3 | หลัง unzip สั่งคำสั่งแรกที่ root แล้วใช้งานได้ ไม่ต้องติดตั้ง runtime บน host | from clean copy: `docker compose up -d --build` → page works | ✅ Docker |
 | T4 | README แนะนำหน้าเว็บ และระบุ `API_BASE` | grep README | ✅ |
-| T5 | browser ไม่เรียก `backend` ตรง: reverse proxy (or localhost API + CORS) | app.js uses relative /api; nginx /api/ → backend:8000 | ✅ code; ☐ Docker run |
-| T6 | ใน container รับการเชื่อมต่อจากภายนอก bind 0.0.0.0 | backend log "listening on 0.0.0.0:8000" | ☐ needs Docker |
+| T5 | browser ไม่เรียก `backend` ตรง: reverse proxy (or localhost API + CORS) | app.js uses relative /api; nginx /api/ → backend:8000 | ✅ Docker |
+| T6 | ใน container รับการเชื่อมต่อจากภายนอก bind 0.0.0.0 | backend log "listening on 0.0.0.0:8000" | ✅ Docker |
 | T7 | หลัง build ทำงานได้โดยไม่พึ่ง cloud | no CDN/external URLs in UI; no runtime fetches | ✅ (grep) |
 
 Notes: file renamed `compose.yaml` → `compose.yml` (paper names compose.yml/docker-compose.yml).
@@ -111,3 +111,7 @@ Submission = zip; zip root must contain compose.yml. SPEC.md / ROADMAP.md stay o
 - Docker Desktop installed (winget). Engine failed: "Virtual Machine Platform is not enabled". Firmware virtualization = Yes.
   Enabled VirtualMachinePlatform + Microsoft-Windows-Subsystem-Linux via elevated DISM (/norestart) → **Windows restart required**.
   After restart: open Docker Desktop → Engine running → `docker compose down -v && docker compose up -d --build --wait && bash check.sh`, then unzip test (T3).
+- (after restart) WSL kernel installed (`wsl --update`); Docker 29.9.2 running.
+- Docker clean run: `down -v` → `up -d --build --wait` → `bash check.sh` → **70/70 PASS** (proof/check-docker-*.txt).
+- Backend stopped → proxy 503 JSON; 2 MB body → 413 JSON (proof/docker-extras.txt).
+- T3: git archive zip → unzip in new dir → `docker compose up -d --build` → page 200, health ok, tickets [] (proof/unzip-first-command.txt).

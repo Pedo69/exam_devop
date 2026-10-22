@@ -1,0 +1,9 @@
+--- from fresh unzip: docker compose up -d --build
+ Container servicedesk-backend-1 Healthy 
+ Container servicedesk-frontend-1 Starting 
+ Container servicedesk-frontend-1 Started 
+page 200
+health {"status":"ok"}
+tickets []
+backend Up 5 seconds (healthy)
+frontend Up Less than a second (health: starting)
