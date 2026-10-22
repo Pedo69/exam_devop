@@ -1,0 +1,13 @@
+--- backend stopped → proxy answers JSON:
+HTTP/1.1 503 Service Temporarily Unavailable
+Content-Type: application/json
+{"error":"backend unavailable, please try again shortly"}
+--- backend back:
+200
+--- 2 MB body → JSON 413:
+HTTP/1.1 413 Request Entity Too Large
+Content-Type: application/json
+{"error":"request body too large"}
+--- images:
+servicedesk-backend:latest 330MB
+servicedesk-frontend:latest 92.5MB

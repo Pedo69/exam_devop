@@ -113,7 +113,7 @@ if [ -z "$SKIP_DOCKER" ]; then
   cmd    T3 "backend bound to 0.0.0.0"         'docker compose logs backend | grep -q "listening on 0.0.0.0:8000"'
   cmd    T3 "page uses relative /api (no localhost:8000 / backend:8000 in UI)" '! curl -fs "$URL/app.js" | grep -qE "localhost:8000|backend:8000"'
   status D1 000 "http://localhost:8000/"
-  cmd    D1 "only frontend publishes a port"   '[ -z "$(docker compose port backend 8000 2>/dev/null)" ]'
+  cmd    D1 "only frontend publishes a port"   '[ "$(docker inspect -f "{{json .HostConfig.PortBindings}}" "$(docker compose ps -q backend)")" = "{}" ]'
   cmd    D2 "persists across down/up"          'docker compose down && docker compose up -d --wait && curl -fs "$API/1" | grep -q "\"status\":\"done\""'
   cmd    D2 "persists across backend recreate" 'docker compose up -d --force-recreate --wait backend && curl -fs "$API/1" | grep -q "\"status\":\"done\""'
   cmd    D2 "new id continues after restart"   'max=$(curl -fs "$API" | grep -o "\"id\":[0-9]*" | cut -d: -f2 | sort -n | tail -1); new=$(curl -fs -X POST "$API" -H "Content-Type: application/json" -d "{\"title\":\"after restart\",\"priority\":\"low\"}" | grep -o "\"id\":[0-9]*" | cut -d: -f2); [ "$new" -gt "$max" ]'
