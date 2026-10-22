@@ -108,3 +108,6 @@ Submission = zip; zip root must contain compose.yml. SPEC.md / ROADMAP.md stay o
 - Backend restart keeps data, ids continue (4 after 3); Thai title round-trips; 20 KB body → 413 (proof/restart-and-extras.txt).
 - NOT yet verified: Docker build, compose, named volume, backend unexposed, non-root (D1–D4) — Docker Desktop not installed.
 - Task 2 added; `SKIP_DOCKER=1 bash check.sh` → 57/57 PASS (proof/check-local-task2-*.txt). Health now {"status":"ok"}; README.md added.
+- Docker Desktop installed (winget). Engine failed: "Virtual Machine Platform is not enabled". Firmware virtualization = Yes.
+  Enabled VirtualMachinePlatform + Microsoft-Windows-Subsystem-Linux via elevated DISM (/norestart) → **Windows restart required**.
+  After restart: open Docker Desktop → Engine running → `docker compose down -v && docker compose up -d --build --wait && bash check.sh`, then unzip test (T3).
