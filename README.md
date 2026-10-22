@@ -11,6 +11,13 @@ Wi‑Fi ใช้งานไม่ได้ ผู้ใช้สร้าง t
 | Web page (open this) | **http://localhost:8080** |
 | `API_BASE` | **http://localhost:8080/api** |
 
+## Ports
+
+| Who | Address | Notes |
+| --- | --- | --- |
+| Browser → frontend | `localhost:8080` | published `8080:80` (nginx listens on 80 in the container) |
+| frontend → backend | `backend:8000` | Compose network only; backend listens on `0.0.0.0:8000`, no host port |
+
 ## Tools and versions
 
 | Tool | Version | Where |
