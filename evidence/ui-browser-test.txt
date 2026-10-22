@@ -1,0 +1,21 @@
+# Real-browser UI test (Edge headless driven via DevTools Protocol) — 2026-10-22 15:06, fresh volume
+# Clicks the real page at http://localhost:8080: form, status select, reload, filters, backend stop/start
+
+PASS UI1  empty volume → empty-state message, no table
+PASS UI2  blank title → form error message
+PASS UI2  no priority → form error message
+PASS UI3  form creates tickets shown in table (trimmed, status open)
+PASS UI3  success message + form reset
+PASS UI3  tickets exist in API (not mock)
+PASS UI4  status change saved and kept after page reload
+PASS UI4  done → open allowed and kept
+PASS UI5  filter all → 2 row(s), all matching
+PASS UI5  filter open → 1 row(s), all matching
+PASS UI5  filter doing → 1 row(s), all matching
+PASS UI5  filter done → 0 row(s), all matching
+PASS UI5  filter counts doing=1 open=1 done=0
+PASS UI5  done filter → "no tickets in status" message
+PASS UI5  chip counters
+PASS UI6  backend down → error message on page
+PASS UI6  backend back → list loads again
+== UI 17 ok, 0 failed

@@ -44,6 +44,10 @@ the all/open/doing/done filter.
 
 ## Additional self-check
 
+Real-browser UI test (form, status change + reload, all/open/doing/done filters, empty and
+error messages, backend stop/start): **17 / 17 PASS** — [ui-browser-test.txt](ui-browser-test.txt).
+
+
 `bash check.sh` (bash + curl only) on a fresh volume: **70 / 70 PASS** — [check-sh-docker.txt](check-sh-docker.txt).
 Also: backend stopped → proxy returns `503` JSON; 2 MB body → `413` JSON ([docker-extras.txt](docker-extras.txt));
 fresh unzip + `docker compose up -d --build` works ([unzip-first-command.txt](unzip-first-command.txt)).

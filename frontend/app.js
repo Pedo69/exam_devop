@@ -50,6 +50,7 @@ async function request(url, options) {
 
 // ---- list ----
 async function loadTickets() {
+  if (tickets.length === 0) showMessage(listMessage, 'กำลังโหลดรายการ…', 'empty');
   try {
     const data = await request(API, { headers: { Accept: 'application/json' } });
     if (!Array.isArray(data)) throw new Error('เกิดข้อผิดพลาด: รูปแบบข้อมูลจาก backend ไม่ถูกต้อง');
