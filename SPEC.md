@@ -39,6 +39,28 @@ Began 2026-10-22 · Source: paper pasted by student (Task 1 only so far)
 | C4 | status enum, default open, any→any | POST → status open; PATCH bad value → 400; done→open → 200 | ✅ local (node, no Docker) |
 | C5 | new volume → empty list | fresh volume GET → [] | ✅ local empty DATA_DIR; Docker volume ☐ |
 
+## Task 2 — API contract (added mid-exam)
+- "ให้กำหนดเลยว่าจะทำเกี่ยวกับแจ้งเตือนอะไร" → chosen theme: แจ้งปัญหาอุปกรณ์ไอทีในสำนักงาน (IT equipment issues)
+- JSON in/out; requests with body send `Content-Type: application/json`; every API response is JSON
+- Other port allowed if the URL is written in README → README must state URL
+
+| ID | Request | Expected | Test | State |
+| --- | --- | --- | --- | --- |
+| A1 | GET /api/health | 200 `{"status":"ok"}` (paper: `{"status ok"}`, see Q5) | curl → body exact | ✅ local (node, no Docker) |
+| A2 | GET /api/tickets | 200 JSON array of all; empty → `[]` | fresh → `[]` | ✅ local (node, no Docker) |
+| A3 | POST /api/ticket(s) `{"title":"printer offline ","priority":"high"}` | 201 ticket, title=`printer offline`, id by server, status=open | curl | ✅ local (node, no Docker) |
+| A4 | PATCH /api/tickets/{id} `{"status":"doing"}` | 200 updated ticket, other fields unchanged; unknown id → 404 + JSON error object | curl | ✅ local (node, no Docker) |
+| A5 | invalid data | 400/422 + JSON error object with readable message; **data unchanged** | list identical before/after | ✅ local (node, no Docker) |
+| A6 | README with URL | README.md states http://localhost:8080 | grep | ✅ local (node, no Docker) |
+
+Validation cases (paper):
+- title empty/missing: `{"title":" ","priority":"low"}` or no title
+- title too long: 81 × "a", priority low
+- title wrong type: paper shows `{"title":"1234",...}` — see Q6
+- priority invalid/missing: `{"title":"Test","priority":"urgent"}` or no priority
+- status invalid/missing: PATCH existing with `{"status":"closed"}` or `{}`
+- broken JSON: body `{broken` with Content-Type application/json
+
 ## Forbidden
 - mock data in frontend; seed data; login; delete; dashboard; CI/CD; cloud deploy
 
@@ -50,15 +72,25 @@ Began 2026-10-22 · Source: paper pasted by student (Task 1 only so far)
   GET /api/tickets, POST /api/tickets, PATCH /api/tickets/:id
 - Status change wording "เปลี่ยน status" → PATCH with body {"status": ...}
 
+- Q4 paper `post/api/ticket` (singular) vs every other route `/api/tickets` → canonical `/api/tickets`;
+  POST `/api/ticket` accepted as an alias so either reading passes
+- Q5 `{"status ok"}` is not valid JSON → assume `{"status":"ok"}`
+- Q6 "ชนิดข้อมูลผิด" with `"1234"` (a string) contradicts "wrong type" → assume paper means number `1234`;
+  a string "1234" is a valid 4-char title per the ticket contract and returns 201
+
 ## Environment notes
 - Docker Desktop NOT installed (docker not on PATH, Docker Desktop.exe missing) — blocks any "volume"/compose items
 - git 2.53, node 22.20, python 3.12.4 present; ports 8080/8000 free
 - SemesterProject/ folder not present in workspace
 
 ## Extras
+- GET /api/tickets/{id}, GET /api/tickets?status= (optional server filter) — not required, harmless
+- POST /api/ticket alias (Q4)
+- 413 for bodies > 10 KB, 405 for wrong method — all JSON
 ## Overrides
 
 ## Progress log
 - Backend + frontend built; `SKIP_DOCKER=1 bash check.sh` → 37/37 PASS (proof/check-local-*.txt) via local node + dev proxy.
 - Backend restart keeps data, ids continue (4 after 3); Thai title round-trips; 20 KB body → 413 (proof/restart-and-extras.txt).
 - NOT yet verified: Docker build, compose, named volume, backend unexposed, non-root (D1–D4) — Docker Desktop not installed.
+- Task 2 added; `SKIP_DOCKER=1 bash check.sh` → 57/57 PASS (proof/check-local-task2-*.txt). Health now {"status":"ok"}; README.md added.

@@ -48,6 +48,7 @@ function onlyKeys(body, allowed) {
 }
 
 function validateTitle(value) {
+  if (value === undefined) throw new HttpError(400, 'title is required');
   if (typeof value !== 'string') throw new HttpError(400, 'title must be a string');
   const title = value.trim();
   const len = Array.from(title).length;
@@ -56,6 +57,7 @@ function validateTitle(value) {
 }
 
 function validateEnum(name, value, allowed) {
+  if (value === undefined) throw new HttpError(400, `${name} is required (one of: ${allowed.join(', ')})`);
   if (typeof value !== 'string' || !allowed.includes(value)) {
     throw new HttpError(400, `${name} must be one of: ${allowed.join(', ')}`);
   }
@@ -104,10 +106,13 @@ async function handle(req, res) {
   const p = url.pathname.replace(/\/+$/, '') || '/';
 
   if (p === '/api/health' && req.method === 'GET') {
-    return send(res, 200, { ok: true });
+    return send(res, 200, { status: 'ok' });
   }
 
-  if (p === '/api/tickets') {
+  // paper lists `POST /api/ticket` once (singular) — accept it as an alias of POST /api/tickets
+  if (p === '/api/ticket' && req.method !== 'POST') throw new HttpError(405, 'method not allowed');
+
+  if (p === '/api/tickets' || p === '/api/ticket') {
     if (req.method === 'GET') {
       // optional server-side filter: ?status=open|doing|done (all = no param)
       const status = url.searchParams.get('status');

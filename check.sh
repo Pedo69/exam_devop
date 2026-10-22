@@ -71,13 +71,44 @@ cmd    F5 "?status=done → only #1"            "r=\$(curl -fs \"$API?status=don
 cmd    F5 "?status=doing → only #2"           "r=\$(curl -fs \"$API?status=doing\"); echo \"\$r\" | grep -q '\"id\":2,' && [ \"\$(echo \"\$r\" | grep -o '\"id\":' | wc -l)\" -eq 1 ]"
 status F5 400 "$API?status=bogus"
 
+# ---- Task 2: API contract, exact paper cases (runs on top of the data above) ----
+json_err() { # <ID> <label> <want-code> <curl args...> — code matches, body is a JSON object with a message
+  local id=$1 label=$2 want=$3 out code body; shift 3
+  out=$(curl -s -m 5 -w '\n%{http_code}' "$@"); code=${out##*$'\n'}; body=${out%$'\n'*}
+  if [[ $code =~ ^($want)$ ]] && node -e 'const o=JSON.parse(process.argv[1]); if(!o||typeof o!=="object"||Array.isArray(o)||!Object.values(o).some(v=>typeof v==="string"&&v.length>3))process.exit(1)' "$body" 2>/dev/null
+  then echo "PASS $id  $code  $label  $body"; ok=$((ok+1))
+  else echo "FAIL $id  got $code  $label  $body"; bad=$((bad+1)); fi
+}
+cmd    A1 'GET /api/health → 200 {"status":"ok"}' "[ \"\$(curl -fs $URL/api/health)\" = '{\"status\":\"ok\"}' ]"
+cmd    A1 "health Content-Type is JSON"        "curl -fsI $URL/api/health | grep -qi '^content-type: application/json'"
+cmd    A2 "GET /api/tickets → JSON array"      "curl -fs $API | node -e 'let s=\"\";process.stdin.on(\"data\",d=>s+=d).on(\"end\",()=>process.exit(Array.isArray(JSON.parse(s))?0:1))'"
+before=$(curl -fs "$API")
+long81=$(printf 'a%.0s' $(seq 1 81))
+json_err A5 "title blank"            '400|422' -X POST "$API" "${H[@]}" -d '{"title":" ","priority":"low"}'
+json_err A5 "title missing"          '400|422' -X POST "$API" "${H[@]}" -d '{"priority":"low"}'
+json_err A5 "title 81 chars"         '400|422' -X POST "$API" "${H[@]}" -d "{\"title\":\"$long81\",\"priority\":\"low\"}"
+json_err A5 "title number 1234"      '400|422' -X POST "$API" "${H[@]}" -d '{"title":1234,"priority":"low"}'
+json_err A5 "priority urgent"        '400|422' -X POST "$API" "${H[@]}" -d '{"title":"Test","priority":"urgent"}'
+json_err A5 "priority missing"       '400|422' -X POST "$API" "${H[@]}" -d '{"title":"Test"}'
+json_err A5 "status closed"          '400|422' -X PATCH "$API/1" "${H[@]}" -d '{"status":"closed"}'
+json_err A5 "status missing {}"      '400|422' -X PATCH "$API/1" "${H[@]}" -d '{}'
+json_err A5 "broken JSON {broken"    '400|422' -X POST "$API" "${H[@]}" -d '{broken'
+json_err A5 "broken JSON on /api/ticket" '400|422' -X POST "$URL/api/ticket" "${H[@]}" -d '{broken'
+json_err A4 "PATCH unknown id → 404" '404' -X PATCH "$API/99999" "${H[@]}" -d '{"status":"doing"}'
+json_err A5 "unknown route is JSON"  '404' "$URL/api/nope"
+cmd    A5 "invalid requests changed nothing" "[ \"\$(curl -fs $API)\" = '$before' ]"
+cmd    A3 "POST /api/tickets printer offline → 201 trimmed/open" "r=\$(curl -s -w ' %{http_code}' -X POST $API -H 'Content-Type: application/json' -d '{\"title\":\"printer offline \",\"priority\":\"high\"}'); echo \"\$r\" | grep -qE '\"id\":[1-9][0-9]*,\"title\":\"printer offline\",\"priority\":\"high\",\"status\":\"open\"} 201\$'"
+cmd    A3 "POST /api/ticket alias → 201"    "curl -s -w ' %{http_code}' -X POST $URL/api/ticket -H 'Content-Type: application/json' -d '{\"title\":\"printer offline \",\"priority\":\"high\"}' | grep -qE '\"title\":\"printer offline\".*\"status\":\"open\"} 201\$'"
+cmd    A4 "PATCH doing → 200, other fields kept" "id=\$(curl -fs $API | grep -o '\"id\":[0-9]*,\"title\":\"printer offline\"' | head -1 | grep -o '[0-9]*' | head -1); r=\$(curl -s -w ' %{http_code}' -X PATCH $API/\$id -H 'Content-Type: application/json' -d '{\"status\":\"doing\"}'); echo \"\$r\" | grep -qx \"{\\\"id\\\":\$id,\\\"title\\\":\\\"printer offline\\\",\\\"priority\\\":\\\"high\\\",\\\"status\\\":\\\"doing\\\"} 200\""
+cmd    A6 "README states the URL"           "grep -q 'http://localhost:8080' README.md"
+
 # ---- docker-level checks ----
 if [ -z "$SKIP_DOCKER" ]; then
   status D1 000 "http://localhost:8000/"
   cmd    D1 "only frontend publishes a port"   '[ -z "$(docker compose port backend 8000 2>/dev/null)" ]'
   cmd    D2 "persists across down/up"          'docker compose down && docker compose up -d --wait && curl -fs "$API/1" | grep -q "\"status\":\"done\""'
   cmd    D2 "persists across backend recreate" 'docker compose up -d --force-recreate --wait backend && curl -fs "$API/1" | grep -q "\"status\":\"done\""'
-  cmd    D2 "new id continues after restart"   'curl -fs -X POST "$API" -H "Content-Type: application/json" -d "{\"title\":\"after restart\",\"priority\":\"low\"}" | grep -q "\"id\":4"'
+  cmd    D2 "new id continues after restart"   'max=$(curl -fs "$API" | grep -o "\"id\":[0-9]*" | cut -d: -f2 | sort -n | tail -1); new=$(curl -fs -X POST "$API" -H "Content-Type: application/json" -d "{\"title\":\"after restart\",\"priority\":\"low\"}" | grep -o "\"id\":[0-9]*" | cut -d: -f2); [ "$new" -gt "$max" ]'
   cmd    D3 "named volume present"             'docker volume ls --format "{{.Name}}" | grep -qx servicedesk_tickets'
   cmd    D4 "backend not root"                 'u=$(docker compose exec -T backend id -u) && [ "$u" != 0 ]'
 fi
