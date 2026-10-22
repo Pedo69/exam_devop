@@ -74,9 +74,11 @@ Browser ──HTTP──> localhost:8080 ──> frontend container (nginx :80, 
 
 ## Build / run / stop
 
-Run in the project root (the folder that contains `compose.yml`):
+Run in the project root — the folder `6706022610454_Apicha_Phaoon/` inside the zip, which contains
+`compose.yml`:
 
 ```bash
+cd 6706022610454_Apicha_Phaoon    # after unzipping
 docker compose up -d --build      # build images and start (first command after unzip)
 docker compose ps                 # both services should become "healthy"
 docker compose logs -f            # follow logs (Ctrl+C to quit)
