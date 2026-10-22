@@ -69,6 +69,12 @@ function render() {
 
   tbody.replaceChildren(...visible.map(renderRow));
 
+  // ticket count per filter chip
+  for (const el of document.querySelectorAll('[data-count]')) {
+    const f = el.dataset.count;
+    el.textContent = f === 'all' ? tickets.length : tickets.filter((t) => t.status === f).length;
+  }
+
   if (tickets.length === 0) {
     table.hidden = true;
     showMessage(listMessage, 'ยังไม่มีรายการ ticket — สร้างรายการแรกจากแบบฟอร์มด้านบน', 'empty');
@@ -85,7 +91,8 @@ function renderRow(ticket) {
   const tr = document.createElement('tr');
 
   const idCell = document.createElement('td');
-  idCell.textContent = ticket.id;
+  idCell.className = 'id-cell';
+  idCell.textContent = '#' + ticket.id;
 
   // textContent, never innerHTML — titles are user input
   const titleCell = document.createElement('td');

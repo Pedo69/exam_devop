@@ -7,16 +7,25 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="container">
-    <header>
-      <h1>ระบบแจ้งปัญหาอุปกรณ์ไอทีในสำนักงาน</h1>
-      <p class="subtitle">Service Desk</p>
-    </header>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1>ระบบแจ้งปัญหาอุปกรณ์ไอทีในสำนักงาน</h1>
+        <p class="subtitle">Service Desk</p>
+      </div>
+    </div>
+  </header>
 
+  <main class="container">
     <section class="card" aria-labelledby="create-heading">
       <h2 id="create-heading">แจ้งปัญหาใหม่</h2>
       <form id="create-form" novalidate>
-        <div class="field">
+        <div class="field field-title">
           <label for="title">หัวข้อ (Title)</label>
           <input id="title" name="title" type="text" maxlength="80" required
                  placeholder="เช่น เครื่องพิมพ์ชั้น 2 ใช้งานไม่ได้">
@@ -31,7 +40,10 @@
             <option value="high">high</option>
           </select>
         </div>
-        <button id="create-btn" type="submit">สร้าง Ticket</button>
+        <div class="field field-action">
+          <span class="label-spacer" aria-hidden="true">&nbsp;</span>
+          <button id="create-btn" type="submit">+ สร้าง Ticket</button>
+        </div>
       </form>
       <p id="form-message" class="message" role="status" hidden></p>
     </section>
@@ -40,26 +52,28 @@
       <div class="list-header">
         <h2 id="list-heading">รายการ Ticket</h2>
         <div class="filters" role="group" aria-label="กรองตามสถานะ">
-          <button type="button" class="filter active" data-filter="all" aria-pressed="true">all</button>
-          <button type="button" class="filter" data-filter="open" aria-pressed="false">open</button>
-          <button type="button" class="filter" data-filter="doing" aria-pressed="false">doing</button>
-          <button type="button" class="filter" data-filter="done" aria-pressed="false">done</button>
+          <button type="button" class="filter active" data-filter="all" aria-pressed="true">all <span class="count" data-count="all">0</span></button>
+          <button type="button" class="filter" data-filter="open" aria-pressed="false">open <span class="count" data-count="open">0</span></button>
+          <button type="button" class="filter" data-filter="doing" aria-pressed="false">doing <span class="count" data-count="doing">0</span></button>
+          <button type="button" class="filter" data-filter="done" aria-pressed="false">done <span class="count" data-count="done">0</span></button>
         </div>
       </div>
 
       <p id="list-message" class="message" role="status" hidden></p>
 
-      <table id="ticket-table" hidden>
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Title</th>
-            <th scope="col">Priority</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody id="ticket-body"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table id="ticket-table" hidden>
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Title</th>
+              <th scope="col">Priority</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="ticket-body"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
