@@ -2,3 +2,8 @@
 node_modules/
 *.log
 proof/tmp/
+
+# exam working notes (kept local, not part of the deliverable)
+SPEC.md
+ROADMAP.md
+evidence/dev/
