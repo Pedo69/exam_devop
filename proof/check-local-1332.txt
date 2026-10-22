@@ -1,0 +1,38 @@
+PASS F1  200  http://localhost:8080/
+PASS F1  page loads app.js and calls /api
+PASS F2  form has labels for title+priority
+PASS F5  filter buttons all/open/doing/done
+PASS C5  fresh system → empty list []
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"priority":"low"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"","priority":"low"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"   ","priority":"low"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":123,"priority":"low"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":null,"priority":"low"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","priority":"low"}
+PASS C3  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"x"}
+PASS C3  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"x","priority":"urgent"}
+PASS C3  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"x","priority":"mediem"}
+PASS C1  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"id":99,"title":"x","priority":"low"}
+PASS C4  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"x","priority":"low","status":"done"}
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d not json
+PASS C2  400  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d ["x"]
+PASS C5  invalid requests stored nothing
+PASS F2  201  -X POST http://localhost:8080/api/tickets -H Content-Type: application/json -d {"title":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","priority":"high"}
+PASS C2  title trimmed + defaults
+PASS C1  ids positive + unique
+PASS F1  API lists created tickets
+PASS C4  200  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {"status":"done"}
+PASS C4  200  -X PATCH http://localhost:8080/api/tickets/2 -H Content-Type: application/json -d {"status":"doing"}
+PASS C4  400  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {"status":"closed"}
+PASS C4  400  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {"status":"done","title":"hack"}
+PASS C4  400  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {}
+PASS C4  404  -X PATCH http://localhost:8080/api/tickets/999 -H Content-Type: application/json -d {"status":"done"}
+PASS C4  400  -X PATCH http://localhost:8080/api/tickets/abc -H Content-Type: application/json -d {"status":"done"}
+PASS F4  status persisted (re-GET)
+PASS C4  200  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {"status":"open"}
+PASS C4  done → open allowed
+PASS C4  200  -X PATCH http://localhost:8080/api/tickets/1 -H Content-Type: application/json -d {"status":"done"}
+PASS F5  ?status=done → only #1
+PASS F5  ?status=doing → only #2
+PASS F5  400  http://localhost:8080/api/tickets?status=bogus
+== 37 ok, 0 failed

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Service Desk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Service Desk</h1>
+      <p class="subtitle">ระบบรับแจ้งปัญหาขนาดเล็ก</p>
+    </header>
+
+    <section class="card" aria-labelledby="create-heading">
+      <h2 id="create-heading">แจ้งปัญหาใหม่</h2>
+      <form id="create-form" novalidate>
+        <div class="field">
+          <label for="title">หัวข้อ (Title)</label>
+          <input id="title" name="title" type="text" maxlength="80" required
+                 placeholder="เช่น เครื่องพิมพ์ชั้น 2 ใช้งานไม่ได้">
+          <small class="hint"><span id="title-count">0</span>/80 ตัวอักษร</small>
+        </div>
+        <div class="field">
+          <label for="priority">ความสำคัญ (Priority)</label>
+          <select id="priority" name="priority" required>
+            <option value="" selected disabled>-- เลือก --</option>
+            <option value="low">low</option>
+            <option value="medium">medium</option>
+            <option value="high">high</option>
+          </select>
+        </div>
+        <button id="create-btn" type="submit">สร้าง Ticket</button>
+      </form>
+      <p id="form-message" class="message" role="status" hidden></p>
+    </section>
+
+    <section class="card" aria-labelledby="list-heading">
+      <div class="list-header">
+        <h2 id="list-heading">รายการ Ticket</h2>
+        <div class="filters" role="group" aria-label="กรองตามสถานะ">
+          <button type="button" class="filter active" data-filter="all" aria-pressed="true">all</button>
+          <button type="button" class="filter" data-filter="open" aria-pressed="false">open</button>
+          <button type="button" class="filter" data-filter="doing" aria-pressed="false">doing</button>
+          <button type="button" class="filter" data-filter="done" aria-pressed="false">done</button>
+        </div>
+      </div>
+
+      <p id="list-message" class="message" role="status" hidden></p>
+
+      <table id="ticket-table" hidden>
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-body"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
