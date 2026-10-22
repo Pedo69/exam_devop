@@ -4,24 +4,53 @@
 Wi‑Fi ใช้งานไม่ได้ ผู้ใช้สร้าง ticket พร้อมระดับความสำคัญ แล้วเจ้าหน้าที่เปลี่ยนสถานะ open → doing → done
 (หรือย้อนกลับได้)
 
-## URL
+## Quick start
 
-| What | URL |
-| --- | --- |
-| Web UI | **http://localhost:8080** |
-| API base | **http://localhost:8080/api** |
-
-Only the frontend publishes a port (8080). The backend has no published port; nginx forwards `/api/*`
-to `backend:8000` on the Compose network.
-
-## Run
+Requirement: Docker (Docker Desktop / Docker Engine with Compose v2). No Node.js, Python or other
+runtime is needed on the host, and nothing is fetched from the cloud at run time.
 
 ```bash
-docker compose up -d --build --wait
-# open http://localhost:8080
+# after unzipping, in the project root (the folder that contains compose.yml):
+docker compose up -d --build
+```
+
+Then open **http://localhost:8080** in a browser.
+
+| What | Value |
+| --- | --- |
+| Web page (open this) | **http://localhost:8080** |
+| `API_BASE` | **http://localhost:8080/api** |
+
+```bash
+docker compose ps          # both services should be "healthy"
+docker compose logs -f     # follow logs
 docker compose down        # stop; tickets stay in the named volume
 docker compose down -v     # stop AND delete all tickets (fresh, empty system)
 ```
+
+### How the browser reaches the API
+
+The browser cannot resolve Compose service names such as `backend`, so it never calls the backend
+directly. The page calls the **relative** path `/api/...` on the same origin (`localhost:8080`); nginx
+in the frontend container reverse-proxies `/api/*` to `backend:8000` on the Compose network. Same
+origin → no CORS needed. Only the frontend publishes a port (`8080:80`); the backend has no published
+port and listens on `0.0.0.0:8000` inside its container.
+
+Port 8080 already in use? Change the left side of `"8080:80"` in `compose.yml`; the web page and
+`API_BASE` then move to that port.
+
+## Persistence
+
+Tickets are stored by the backend in `/data/tickets.json` on the Docker **named volume**
+`servicedesk_tickets`. Containers can be removed, recreated or rebuilt; the volume remains:
+
+```bash
+docker compose down && docker compose up -d                    # data kept
+docker compose up -d --force-recreate --build                  # data kept
+docker volume inspect servicedesk_tickets                      # where it lives
+```
+
+A new volume starts with an empty list.
 
 ## Architecture
 
@@ -39,8 +68,8 @@ Browser ──HTTP──> localhost:8080 ──> frontend (nginx :80, HTML + JS,
 | --- | --- |
 | `frontend/` | `index.html`, `app.js`, `style.css` (plain HTML/JS), `nginx.conf`, `Dockerfile` |
 | `backend/` | `server.js` (Node.js built-ins only, no dependencies), `Dockerfile` |
-| `compose.yaml` | services `frontend`, `backend`; volume `tickets` |
-| `check.sh` | automated checks for every requirement |
+| `compose.yml` | services `frontend`, `backend`; named volume `tickets` → `/data` |
+| `check.sh` | self-check script for every requirement (bash + curl only) |
 
 ## Ticket
 
@@ -89,11 +118,13 @@ curl -X PATCH http://localhost:8080/api/tickets/1 -H "Content-Type: application/
      -d '{"status":"doing"}'
 ```
 
-## Verification
+## Self-check
 
 ```bash
-docker compose down -v && docker compose up -d --build --wait
-bash check.sh          # prints PASS/FAIL per requirement; expects an empty volume
+docker compose down -v && docker compose up -d --build --wait   # fresh, empty volume
+bash check.sh          # Git Bash / Linux / macOS; prints PASS/FAIL per requirement
 ```
 
-Results are saved in `proof/`.
+It covers the UI page, every API case above, that invalid requests change no data, that the backend
+publishes no port, persistence across `down`/`up` and container recreate, the named volume, and that
+the backend runs as a non-root user. Saved results are in `proof/`.

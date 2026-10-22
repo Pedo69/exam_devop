@@ -61,6 +61,20 @@ Validation cases (paper):
 - status invalid/missing: PATCH existing with `{"status":"closed"}` or `{}`
 - broken JSON: body `{broken` with Content-Type application/json
 
+## Task 3 — Docker + self-check (added mid-exam, with ภาพ 1)
+| ID | Item (paper wording) | Test | State |
+| --- | --- | --- | --- |
+| T1 | frontend และ backend คนละ container, Dockerfile แต่ละส่วน, `compose.yml` หรือ `docker-compose.yml` ที่ root | files exist; `docker compose ps` → 2 healthy | ☐ needs Docker |
+| T2 | ข้อมูลอยู่ที่ backend, Docker **named volume** เก็บข้อมูลถาวร (DB container optional; chose JSON file, no DB) | down/up + force-recreate keep data; `servicedesk_tickets` exists | ☐ needs Docker |
+| T3 | หลัง unzip สั่งคำสั่งแรกที่ root แล้วใช้งานได้ ไม่ต้องติดตั้ง runtime บน host | from clean copy: `docker compose up -d --build` → page works | ☐ needs Docker |
+| T4 | README แนะนำหน้าเว็บ และระบุ `API_BASE` | grep README | ✅ |
+| T5 | browser ไม่เรียก `backend` ตรง: reverse proxy (or localhost API + CORS) | app.js uses relative /api; nginx /api/ → backend:8000 | ✅ code; ☐ Docker run |
+| T6 | ใน container รับการเชื่อมต่อจากภายนอก bind 0.0.0.0 | backend log "listening on 0.0.0.0:8000" | ☐ needs Docker |
+| T7 | หลัง build ทำงานได้โดยไม่พึ่ง cloud | no CDN/external URLs in UI; no runtime fetches | ✅ (grep) |
+
+Notes: file renamed `compose.yaml` → `compose.yml` (paper names compose.yml/docker-compose.yml).
+Submission = zip; zip root must contain compose.yml. SPEC.md / ROADMAP.md stay out of the zip.
+
 ## Forbidden
 - mock data in frontend; seed data; login; delete; dashboard; CI/CD; cloud deploy
 

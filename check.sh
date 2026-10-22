@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# work/check.sh — run from work/ (beside compose.yaml). Expects an EMPTY volume for C5.
+# check.sh — self-check; run from the project root (beside compose.yml). Needs only bash + curl.
+# Expects an EMPTY volume: docker compose down -v && docker compose up -d --build --wait
 #   bash check.sh                 # against http://localhost:8080
 #   SKIP_DOCKER=1 bash check.sh   # API checks only (no docker)
 export MSYS_NO_PATHCONV=1
@@ -75,13 +76,14 @@ status F5 400 "$API?status=bogus"
 json_err() { # <ID> <label> <want-code> <curl args...> — code matches, body is a JSON object with a message
   local id=$1 label=$2 want=$3 out code body; shift 3
   out=$(curl -s -m 5 -w '\n%{http_code}' "$@"); code=${out##*$'\n'}; body=${out%$'\n'*}
-  if [[ $code =~ ^($want)$ ]] && node -e 'const o=JSON.parse(process.argv[1]); if(!o||typeof o!=="object"||Array.isArray(o)||!Object.values(o).some(v=>typeof v==="string"&&v.length>3))process.exit(1)' "$body" 2>/dev/null
+  # JSON object containing a string value of 4+ chars (the readable message)
+  if [[ $code =~ ^($want)$ ]] && echo "$body" | grep -qE '^\{.*"[A-Za-z_]+":"[^"]{4,}".*\}$'
   then echo "PASS $id  $code  $label  $body"; ok=$((ok+1))
   else echo "FAIL $id  got $code  $label  $body"; bad=$((bad+1)); fi
 }
 cmd    A1 'GET /api/health → 200 {"status":"ok"}' "[ \"\$(curl -fs $URL/api/health)\" = '{\"status\":\"ok\"}' ]"
 cmd    A1 "health Content-Type is JSON"        "curl -fsI $URL/api/health | grep -qi '^content-type: application/json'"
-cmd    A2 "GET /api/tickets → JSON array"      "curl -fs $API | node -e 'let s=\"\";process.stdin.on(\"data\",d=>s+=d).on(\"end\",()=>process.exit(Array.isArray(JSON.parse(s))?0:1))'"
+cmd    A2 "GET /api/tickets → JSON array"      "curl -fs $API | tr -d '\n' | grep -qE '^\[.*\]$'"
 before=$(curl -fs "$API")
 long81=$(printf 'a%.0s' $(seq 1 81))
 json_err A5 "title blank"            '400|422' -X POST "$API" "${H[@]}" -d '{"title":" ","priority":"low"}'
@@ -104,6 +106,12 @@ cmd    A6 "README states the URL"           "grep -q 'http://localhost:8080' REA
 
 # ---- docker-level checks ----
 if [ -z "$SKIP_DOCKER" ]; then
+  cmd    T1 "compose.yml at root parses"       '[ -f compose.yml ] && docker compose -f compose.yml config --quiet'
+  cmd    T1 "Dockerfile per part"              '[ -f frontend/Dockerfile ] && [ -f backend/Dockerfile ]'
+  cmd    T1 "frontend + backend separate, healthy" 'for s in frontend backend; do [ "$(docker inspect -f "{{.State.Health.Status}}" "$(docker compose ps -q $s)")" = healthy ] || exit 1; done'
+  cmd    T3 "proxy reaches backend:8000 by service name" 'docker compose exec -T frontend wget -qO- http://backend:8000/api/health | grep -q "\"status\":\"ok\""'
+  cmd    T3 "backend bound to 0.0.0.0"         'docker compose logs backend | grep -q "listening on 0.0.0.0:8000"'
+  cmd    T3 "page uses relative /api (no localhost:8000 / backend:8000 in UI)" '! curl -fs "$URL/app.js" | grep -qE "localhost:8000|backend:8000"'
   status D1 000 "http://localhost:8000/"
   cmd    D1 "only frontend publishes a port"   '[ -z "$(docker compose port backend 8000 2>/dev/null)" ]'
   cmd    D2 "persists across down/up"          'docker compose down && docker compose up -d --wait && curl -fs "$API/1" | grep -q "\"status\":\"done\""'
