@@ -145,10 +145,10 @@ curl -X PATCH http://localhost:8080/api/tickets/1 -H "Content-Type: application/
 
 | File | Content |
 | --- | --- |
-| `evidence/ui-ticket-list.png` | screenshot of the UI with tickets and statuses |
-| `evidence/compose-ps.txt`, `evidence/compose-logs.txt` | `docker compose ps` and logs as text |
-| `evidence/test-result.md` | T01–T08 pass/fail with actual results |
-| `evidence/persistence-down-up.txt` | API output before / after `docker compose down` → `up` |
+| `evidence/1-ui-ticket-list.png` | 1 — screenshot of the UI with tickets and statuses |
+| `evidence/compose-ps.txt`, `evidence/compose-logs.txt` + `2-compose-ps.png`, `2-compose-logs.png` | 2 — `docker compose ps` and logs as text (and screenshots of them) |
+| `evidence/test-result.md` + `3-test-result.png` | 3 — T01–T08 pass/fail with actual results |
+| `evidence/persistence-down-up.txt` + `4-persistence-down-up.png` | 4 — API output before / after `docker compose down` → `up` |
 | `evidence/api-results.txt`, `evidence/docker-topology.txt` | raw `curl` / `docker` output behind T01–T08 |
 
 Tests were run manually with `curl` (no test framework). To repeat all checks automatically:

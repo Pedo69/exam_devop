@@ -38,7 +38,7 @@ list after T06: identical.
 
 ## UI check
 
-[ui-ticket-list.png](ui-ticket-list.png) — the page at http://localhost:8080 showing 4 tickets loaded
+[1-ui-ticket-list.png](1-ui-ticket-list.png) — the page at http://localhost:8080 showing 4 tickets loaded
 from the backend with statuses `doing`, `open`, `done`, `open`, the create form with labels, and
 the all/open/doing/done filter.
 
