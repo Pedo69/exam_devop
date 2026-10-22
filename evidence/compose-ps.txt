@@ -1,0 +1,8 @@
+$ docker compose ps
+NAME                     IMAGE                  COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+servicedesk-backend-1    servicedesk-backend    "docker-entrypoint.s…"   backend    40 seconds ago   Up 40 seconds (healthy)   8000/tcp
+servicedesk-frontend-1   servicedesk-frontend   "/docker-entrypoint.…"   frontend   40 seconds ago   Up 35 seconds (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+
+$ docker compose ps --format "{{.Service}}: {{.Status}}"
+backend: Up 40 seconds (healthy)
+frontend: Up 35 seconds (healthy)

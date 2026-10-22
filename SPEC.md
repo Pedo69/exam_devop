@@ -75,6 +75,20 @@ Validation cases (paper):
 Notes: file renamed `compose.yaml` → `compose.yml` (paper names compose.yml/docker-compose.yml).
 Submission = zip; zip root must contain compose.yml. SPEC.md / ROADMAP.md stay out of the zip.
 
+## Task 4 — README, evidence, AI_USAGE, packaging (added mid-exam)
+| ID | Item (paper wording) | Test | State |
+| --- | --- | --- | --- |
+| R1 | README.md: เครื่องมือและ version, โครงสร้างแอป, URL หน้าเว็บ/API_BASE, วิธี build/run/stop, ตำแหน่ง named volume, ข้อจำกัดที่ยังทำไม่สำเร็จ | read README sections | ☐ |
+| E1 | ภาพหน้าจอ UI ที่เห็นรายการและสถานะ | evidence/*.png shows tickets w/ statuses | ☐ |
+| E2 | compose ps และ logs แบบข้อความ | evidence/compose-ps.txt, compose-logs.txt | ☐ |
+| E3 | test-result.md ระบุ T01–T08 ผ่าน/ไม่ผ่าน พร้อมผลจริง (manual OK, no framework needed) | file with real outputs | ☐ |
+| E4 | ผล API ก่อน/หลัง down-up | evidence/persistence-down-up.txt identical lists | ☐ |
+| AI | AI_USAGE.md: ชื่อ AI, สรุป prompt/งานสำคัญ 2–3 รายการ, สิ่งที่ตรวจแก้จากคำตอบ AI | read | ☐ |
+| Z1 | zip ไม่มี node_modules, venv, image tar, ไฟล์ข้อมูลที่สร้างระหว่างสอบ, รหัสผ่าน, .git | `unzip -l` | ☐ |
+| Z2 | unzip แล้วพบ compose ที่ root | `unzip -l` shows compose.yml at top level | ☐ |
+
+Interpretation Q7: T01–T08 not listed in the pasted text → defined by us (see evidence/test-result.md) unless the paper lists them.
+
 ## Forbidden
 - mock data in frontend; seed data; login; delete; dashboard; CI/CD; cloud deploy
 

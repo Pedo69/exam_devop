@@ -1,0 +1,47 @@
+# T08 Docker topology — separate containers, reverse proxy, only 8080 published, named volume
+
+$ docker compose ps
+NAME                     IMAGE                  COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+servicedesk-backend-1    servicedesk-backend    "docker-entrypoint.s…"   backend    36 seconds ago   Up 36 seconds (healthy)   8000/tcp
+servicedesk-frontend-1   servicedesk-frontend   "/docker-entrypoint.…"   frontend   36 seconds ago   Up 31 seconds (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+
+$ curl -m 3 http://localhost:8000/api/health   (backend must NOT be reachable from host)
+HTTP 000
+exit code 7 (7 = connection refused)
+
+$ docker inspect -f "{{json .HostConfig.PortBindings}}" <backend>
+{}
+
+$ docker compose exec -T frontend wget -qO- http://backend:8000/api/health   (service name works inside the network)
+{"status":"ok"}
+
+$ curl http://localhost:8080/api/health   (browser path: same origin → nginx /api proxy)
+{"status":"ok"}  HTTP 200
+
+$ docker compose logs backend | grep listening
+backend-1  | service-desk api listening on 0.0.0.0:8000, data in /data/tickets.json
+
+$ docker compose exec -T backend id
+uid=1000(node) gid=1000(node) groups=1000(node)
+
+$ docker volume inspect servicedesk_tickets
+[
+    {
+        "CreatedAt": "2026-10-22T07:33:36Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.compose.config-hash": "abe3453f5295c49ef331d76ed9ef35b36398849ebdc78aa3cb5390182f3a46c8",
+            "com.docker.compose.project": "servicedesk",
+            "com.docker.compose.version": "5.6.0",
+            "com.docker.compose.volume": "tickets"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/servicedesk_tickets/_data",
+        "Name": "servicedesk_tickets",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+$ docker compose exec -T backend ls -l /data
+total 4
+-rw-r--r-- 1 node node 619 Oct 22 07:33 tickets.json

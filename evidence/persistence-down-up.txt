@@ -1,0 +1,47 @@
+# T07 persistence — API before/after docker compose down → up (named volume kept)
+
+## before
+$ curl http://localhost:8080/api/tickets
+[{"id":1,"title":"printer offline","priority":"high","status":"doing"},{"id":2,"title":"คอมพิวเตอร์ห้อง 301 เปิดไม่ติด","priority":"medium","status":"open"},{"id":3,"title":"Wi-Fi ชั้น 2 หลุดบ่อย","priority":"high","status":"done"},{"id":4,"title":"เมาส์ห้องประชุมเสีย","priority":"low","status":"open"}]
+
+$ docker compose down
+ Container servicedesk-frontend-1 Stopping 
+ Container servicedesk-frontend-1 Stopped 
+ Container servicedesk-frontend-1 Removing 
+ Container servicedesk-frontend-1 Removed 
+ Container servicedesk-backend-1 Stopping 
+ Container servicedesk-backend-1 Stopped 
+ Container servicedesk-backend-1 Removing 
+ Container servicedesk-backend-1 Removed 
+ Network servicedesk_default Removing 
+ Network servicedesk_default Removed 
+
+$ docker volume ls --filter name=servicedesk
+DRIVER    VOLUME NAME
+local     servicedesk_tickets
+
+$ docker compose up -d --wait
+ Network servicedesk_default Creating 
+ Network servicedesk_default Creating 
+ Network servicedesk_default Created 
+ Network servicedesk_default Created 
+ Container servicedesk-backend-1 Creating 
+ Container servicedesk-backend-1 Created 
+ Container servicedesk-frontend-1 Creating 
+ Container servicedesk-frontend-1 Created 
+ Container servicedesk-backend-1 Starting 
+ Container servicedesk-backend-1 Started 
+ Container servicedesk-backend-1 Waiting 
+ Container servicedesk-backend-1 Healthy 
+ Container servicedesk-frontend-1 Starting 
+ Container servicedesk-frontend-1 Started 
+ Container servicedesk-backend-1 Waiting 
+ Container servicedesk-frontend-1 Waiting 
+ Container servicedesk-backend-1 Healthy 
+ Container servicedesk-frontend-1 Healthy 
+
+## after
+$ curl http://localhost:8080/api/tickets
+[{"id":1,"title":"printer offline","priority":"high","status":"doing"},{"id":2,"title":"คอมพิวเตอร์ห้อง 301 เปิดไม่ติด","priority":"medium","status":"open"},{"id":3,"title":"Wi-Fi ชั้น 2 หลุดบ่อย","priority":"high","status":"done"},{"id":4,"title":"เมาส์ห้องประชุมเสีย","priority":"low","status":"open"}]
+
+RESULT: identical before/after → PASS

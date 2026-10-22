@@ -1,90 +1,114 @@
 # Service Desk — ระบบแจ้งปัญหาอุปกรณ์ไอที
 
 ระบบรับแจ้งปัญหาขนาดเล็กสำหรับ **อุปกรณ์ไอทีในสำนักงาน** เช่น เครื่องพิมพ์เสีย คอมพิวเตอร์เปิดไม่ติด
-Wi‑Fi ใช้งานไม่ได้ ผู้ใช้สร้าง ticket พร้อมระดับความสำคัญ แล้วเจ้าหน้าที่เปลี่ยนสถานะ open → doing → done
-(หรือย้อนกลับได้)
+Wi‑Fi ใช้งานไม่ได้ ผู้ใช้สร้าง ticket พร้อมระดับความสำคัญ (priority) และเปลี่ยนสถานะ open / doing / done
+ได้อิสระ หน้าเว็บเป็นหน้าเดียว (HTML + JavaScript ธรรมดา) ข้อมูลทั้งหมดมาจาก backend จริง
 
-## Quick start
-
-Requirement: Docker (Docker Desktop / Docker Engine with Compose v2). No Node.js, Python or other
-runtime is needed on the host, and nothing is fetched from the cloud at run time.
-
-```bash
-# after unzipping, in the project root (the folder that contains compose.yml):
-docker compose up -d --build
-```
-
-Then open **http://localhost:8080** in a browser.
+## URL
 
 | What | Value |
 | --- | --- |
 | Web page (open this) | **http://localhost:8080** |
 | `API_BASE` | **http://localhost:8080/api** |
 
-```bash
-docker compose ps          # both services should be "healthy"
-docker compose logs -f     # follow logs
-docker compose down        # stop; tickets stay in the named volume
-docker compose down -v     # stop AND delete all tickets (fresh, empty system)
-```
+## Tools and versions
 
-### How the browser reaches the API
+| Tool | Version | Where |
+| --- | --- | --- |
+| Docker Engine / CLI | 29.9.2 | host (Docker Desktop, Windows 10 + WSL 2) |
+| Docker Compose | v5.6.0 | host |
+| Node.js | 24.22.1 (image `node:24-slim`, Debian 12) | backend container — built-in modules only, no npm packages |
+| nginx | 1.28.3 (image `nginx:1.28-alpine`, Alpine 3.23) | frontend container — static files + `/api` reverse proxy |
+| HTML / CSS / JavaScript | plain, no framework, no CDN | frontend |
+| Storage | JSON file `/data/tickets.json` on a Docker named volume | backend |
 
-The browser cannot resolve Compose service names such as `backend`, so it never calls the backend
-directly. The page calls the **relative** path `/api/...` on the same origin (`localhost:8080`); nginx
-in the frontend container reverse-proxies `/api/*` to `backend:8000` on the Compose network. Same
-origin → no CORS needed. Only the frontend publishes a port (`8080:80`); the backend has no published
-port and listens on `0.0.0.0:8000` inside its container.
+No Node.js, Python or other runtime is needed on the host — only Docker. Nothing is downloaded from
+the cloud at run time (base images are pulled once during the first build).
 
-Port 8080 already in use? Change the left side of `"8080:80"` in `compose.yml`; the web page and
-`API_BASE` then move to that port.
-
-## Persistence
-
-Tickets are stored by the backend in `/data/tickets.json` on the Docker **named volume**
-`servicedesk_tickets`. Containers can be removed, recreated or rebuilt; the volume remains:
-
-```bash
-docker compose down && docker compose up -d                    # data kept
-docker compose up -d --force-recreate --build                  # data kept
-docker volume inspect servicedesk_tickets                      # where it lives
-```
-
-A new volume starts with an empty list.
-
-## Architecture
+## App structure
 
 ```
-Browser ──HTTP──> localhost:8080 ──> frontend (nginx :80, HTML + JS, /api proxy)
-                                          │ /api/*  ──>  backend:8000
+.
+├── compose.yml            # services frontend + backend, named volume "tickets"
+├── frontend/
+│   ├── Dockerfile         # nginx:1.28-alpine
+│   ├── nginx.conf         # serves the page, proxies /api/* -> backend:8000
+│   ├── index.html         # single page: form, filter, ticket table
+│   ├── app.js             # fetch('/api/tickets'), create, change status, filter
+│   └── style.css
+├── backend/
+│   ├── Dockerfile         # node:24-slim, runs as user "node"
+│   ├── package.json
+│   └── server.js          # REST API + validation, stores /data/tickets.json
+├── check.sh               # self-check script (bash + curl)
+├── evidence/              # screenshot, compose ps/logs, test-result.md, API before/after down-up
+├── README.md
+└── AI_USAGE.md
+```
+
+```
+Browser ──HTTP──> localhost:8080 ──> frontend container (nginx :80, UI + /api proxy)
+                                          │ /api/*  ──>  backend:8000   (Compose DNS)
                                           v
-                                   backend (Node.js API + validation)
+                                   backend container (Node.js API + data validation)
                                           │ read / write
                                           v
-                              named volume `tickets` ──> /data/tickets.json
+                              named volume servicedesk_tickets ──> /data
 ```
 
-| Path | Content |
+- The browser cannot resolve the Compose service name `backend`, so the page only calls the
+  **relative** path `/api/...` on the same origin; nginx forwards it to `backend:8000`. Same origin →
+  no CORS needed.
+- Only the frontend publishes a port (`8080:80`). The backend has **no published port** and listens on
+  `0.0.0.0:8000` inside its container.
+
+## Build / run / stop
+
+Run in the project root (the folder that contains `compose.yml`):
+
+```bash
+docker compose up -d --build      # build images and start (first command after unzip)
+docker compose ps                 # both services should become "healthy"
+docker compose logs -f            # follow logs (Ctrl+C to quit)
+docker compose stop               # stop containers (keep them)
+docker compose start              # start them again
+docker compose down               # stop and remove containers — tickets are KEPT in the volume
+docker compose down -v            # stop and ALSO delete the volume — next start is an empty system
+```
+
+Port 8080 already in use? Change the left side of `"8080:80"` in `compose.yml`; the web page and
+`API_BASE` then use that port.
+
+## Named volume (persistent data)
+
+| Item | Value |
 | --- | --- |
-| `frontend/` | `index.html`, `app.js`, `style.css` (plain HTML/JS), `nginx.conf`, `Dockerfile` |
-| `backend/` | `server.js` (Node.js built-ins only, no dependencies), `Dockerfile` |
-| `compose.yml` | services `frontend`, `backend`; named volume `tickets` → `/data` |
-| `check.sh` | self-check script for every requirement (bash + curl only) |
+| Volume name in `compose.yml` | `tickets` |
+| Actual Docker volume | `servicedesk_tickets` (project name `servicedesk`) |
+| Mounted in backend at | `/data` |
+| Data file | `/data/tickets.json` |
+| Location inside Docker | `/var/lib/docker/volumes/servicedesk_tickets/_data` (inside the Docker Desktop VM) |
+
+```bash
+docker volume inspect servicedesk_tickets
+docker compose exec backend ls -l /data
+```
+
+Containers can be removed, recreated or rebuilt — the named volume remains. A new volume starts with
+an empty ticket list (no seed data).
 
 ## Ticket
 
 | Field | Type | Rule |
 | --- | --- | --- |
-| `id` | positive integer | created by the server, unique |
-| `title` | string | trimmed, 1–80 characters |
+| `id` | positive integer | created by the server, unique, never entered by the user |
+| `title` | string | trimmed, then 1–80 characters |
 | `priority` | string | `low` \| `medium` \| `high`, required on create |
-| `status` | string | `open` \| `doing` \| `done`, new tickets start `open`; any → any |
-
-A new system on a new volume starts with an empty list (no seed data).
+| `status` | string | `open` \| `doing` \| `done`; new tickets start `open`; any → any |
 
 ## API
 
-All requests with a body use `Content-Type: application/json`; every response is JSON.
+Requests with a body use `Content-Type: application/json`; every response is JSON.
 
 | Request | Success | Errors |
 | --- | --- | --- |
@@ -93,21 +117,20 @@ All requests with a body use `Content-Type: application/json`; every response is
 | `POST /api/tickets` `{"title":"printer offline ","priority":"high"}` | `201 {"id":1,"title":"printer offline","priority":"high","status":"open"}` | `400 {"error":"..."}` |
 | `PATCH /api/tickets/{id}` `{"status":"doing"}` | `200` updated ticket (other fields unchanged) | `400 {"error":"..."}`, `404 {"error":"ticket not found"}` |
 
-`POST /api/ticket` (singular) is accepted as an alias of `POST /api/tickets`.
+`POST /api/ticket` (singular, as written once in the exam paper) is accepted as an alias of
+`POST /api/tickets`.
 
-Invalid input returns `400` with a JSON object `{"error":"<readable message>"}` and **changes no data**:
+Invalid input returns `400` with `{"error":"<readable message>"}` and **changes no data**:
 
 | Case | Example | Response |
 | --- | --- | --- |
-| title blank / missing | `{"title":" ","priority":"low"}` / no title | `400 {"error":"title must be 1-80 characters after trimming"}` / `{"error":"title is required"}` |
-| title too long | 81 × `a` | `400 {"error":"title must be 1-80 characters after trimming"}` |
-| title wrong type | `{"title":1234,"priority":"low"}` | `400 {"error":"title must be a string"}` |
-| priority invalid / missing | `{"title":"Test","priority":"urgent"}` / no priority | `400 {"error":"priority must be one of: low, medium, high"}` / `{"error":"priority is required (one of: low, medium, high)"}` |
-| status invalid / missing | `PATCH {"status":"closed"}` or `{}` | `400 {"error":"status must be one of: open, doing, done"}` / `{"error":"status is required (one of: open, doing, done)"}` |
-| broken JSON | `{broken` | `400 {"error":"body must be valid JSON"}` |
-| unknown id | `PATCH /api/tickets/999` | `404 {"error":"ticket not found"}` |
-
-### Examples
+| title blank / missing | `{"title":" ","priority":"low"}` / no title | `title must be 1-80 characters after trimming` / `title is required` |
+| title too long | 81 × `a` | `title must be 1-80 characters after trimming` |
+| title wrong type | `{"title":1234,"priority":"low"}` | `title must be a string` |
+| priority invalid / missing | `{"title":"Test","priority":"urgent"}` / no priority | `priority must be one of: low, medium, high` / `priority is required (...)` |
+| status invalid / missing | `PATCH {"status":"closed"}` / `{}` | `status must be one of: open, doing, done` / `status is required (...)` |
+| broken JSON | `{broken` | `body must be valid JSON` |
+| unknown id | `PATCH /api/tickets/999` | `404 ticket not found` |
 
 ```bash
 curl http://localhost:8080/api/health
@@ -118,13 +141,32 @@ curl -X PATCH http://localhost:8080/api/tickets/1 -H "Content-Type: application/
      -d '{"status":"doing"}'
 ```
 
-## Self-check
+## Evidence and self-check
+
+| File | Content |
+| --- | --- |
+| `evidence/ui-ticket-list.png` | screenshot of the UI with tickets and statuses |
+| `evidence/compose-ps.txt`, `evidence/compose-logs.txt` | `docker compose ps` and logs as text |
+| `evidence/test-result.md` | T01–T08 pass/fail with actual results |
+| `evidence/persistence-down-up.txt` | API output before / after `docker compose down` → `up` |
+| `evidence/api-results.txt`, `evidence/docker-topology.txt` | raw `curl` / `docker` output behind T01–T08 |
+
+Tests were run manually with `curl` (no test framework). To repeat all checks automatically:
 
 ```bash
 docker compose down -v && docker compose up -d --build --wait   # fresh, empty volume
-bash check.sh          # Git Bash / Linux / macOS; prints PASS/FAIL per requirement
+bash check.sh                                                    # Git Bash / Linux / macOS
 ```
 
-It covers the UI page, every API case above, that invalid requests change no data, that the backend
-publishes no port, persistence across `down`/`up` and container recreate, the named volume, and that
-the backend runs as a non-root user. Saved results are in `proof/`.
+## Limitations / not done
+
+- **Out of scope by the exam paper:** login, delete, dashboard, CI/CD, cloud deployment, navigation menu.
+- **Interpretations not yet confirmed:** the paper writes the priority value as "mediem"; this app uses
+  `medium`. The "wrong type" title case is implemented as a number (`1234`); a string `"1234"` is a
+  valid 4-character title and is accepted (201).
+- **Storage:** one JSON file written by a single backend container (atomic write via temp file +
+  rename). Not designed for several backend replicas writing at once; no automatic backup.
+- **Tested only on** Windows 10 + Docker Desktop 29.9.2 (WSL 2). `check.sh` needs bash (Git Bash on
+  Windows). The screenshot was captured with headless Microsoft Edge.
+- **Not done:** no HTTPS, no authentication on the API, images not size-optimised (backend image
+  ≈ 330 MB because of `node:24-slim`), no pagination or sorting of tickets (not required).

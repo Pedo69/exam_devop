@@ -1,0 +1,60 @@
+# Raw API results — 2026-10-22 14:33 — fresh volume (docker compose down -v && up -d --build --wait)
+
+## T01 health
+$ curl -X GET http://localhost:8080/api/health
+{"status":"ok"}
+ HTTP 200 (application/json; charset=utf-8)
+
+## T02 list on fresh volume
+$ curl -X GET http://localhost:8080/api/tickets
+[]
+ HTTP 200 (application/json; charset=utf-8)
+
+## T03 create
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":"printer offline ","priority":"high"}'
+{"id":1,"title":"printer offline","priority":"high","status":"open"}
+ HTTP 201 (application/json; charset=utf-8)
+
+## T04 update status
+$ curl -X PATCH http://localhost:8080/api/tickets/1 -H 'Content-Type: application/json' -d '{"status":"doing"}'
+{"id":1,"title":"printer offline","priority":"high","status":"doing"}
+ HTTP 200 (application/json; charset=utf-8)
+$ curl -X GET http://localhost:8080/api/tickets
+[{"id":1,"title":"printer offline","priority":"high","status":"doing"}]
+ HTTP 200 (application/json; charset=utf-8)
+
+## T05 unknown id
+$ curl -X PATCH http://localhost:8080/api/tickets/999 -H 'Content-Type: application/json' -d '{"status":"doing"}'
+{"error":"ticket not found"}
+ HTTP 404 (application/json; charset=utf-8)
+
+## T06 invalid input (data must not change)
+before: [{"id":1,"title":"printer offline","priority":"high","status":"doing"}]
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":" ","priority":"low"}'
+{"error":"title must be 1-80 characters after trimming"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"priority":"low"}'
+{"error":"title is required"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","priority":"low"}'
+{"error":"title must be 1-80 characters after trimming"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":1234,"priority":"low"}'
+{"error":"title must be a string"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":"Test","priority":"urgent"}'
+{"error":"priority must be one of: low, medium, high"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{"title":"Test"}'
+{"error":"priority is required (one of: low, medium, high)"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X PATCH http://localhost:8080/api/tickets/1 -H 'Content-Type: application/json' -d '{"status":"closed"}'
+{"error":"status must be one of: open, doing, done"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X PATCH http://localhost:8080/api/tickets/1 -H 'Content-Type: application/json' -d '{}'
+{"error":"status is required (one of: open, doing, done)"}
+ HTTP 400 (application/json; charset=utf-8)
+$ curl -X POST http://localhost:8080/api/tickets -H 'Content-Type: application/json' -d '{broken'
+{"error":"body must be valid JSON"}
+ HTTP 400 (application/json; charset=utf-8)
+after:  [{"id":1,"title":"printer offline","priority":"high","status":"doing"}]
