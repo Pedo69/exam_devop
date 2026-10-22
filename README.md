@@ -168,9 +168,9 @@ bash check.sh                                                    # Git Bash / Li
 ## Limitations / not done
 
 - **Out of scope by the exam paper:** login, delete, dashboard, CI/CD, cloud deployment, navigation menu.
-- **Interpretations not yet confirmed:** the paper writes the priority value as "mediem"; this app uses
-  `medium`. The "wrong type" title case is implemented as a number (`1234`); a string `"1234"` is a
-  valid 4-character title and is accepted (201).
+- **Interpretation:** the "wrong type" title case is implemented as a number (`1234`); a string
+  `"1234"` is a valid 4-character title and is accepted (201). (The paper's "mediem" was a typo for
+  `medium`, as confirmed.)
 - **Storage:** one JSON file written by a single backend container (atomic write via temp file +
   rename). Not designed for several backend replicas writing at once; no automatic backup.
 - **Tested only on** Windows 10 + Docker Desktop 29.9.2 (WSL 2). `check.sh` needs bash (Git Bash on

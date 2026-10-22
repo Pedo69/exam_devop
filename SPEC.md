@@ -11,7 +11,7 @@ Began 2026-10-22 · Source: paper pasted by student (Task 1 only so far)
 | --- | --- | --- |
 | system | service desk | "service desk คือระบบรับแจ้ง...ขนาดเล็ก" |
 | ticket fields | id, title, priority, status | สัญญา ticket |
-| priority values | low, medium(?), high | "low,mediem,high" — see Q1 |
+| priority values | low, medium, high | "low,mediem,high" — typo, confirmed `medium` (Q1) |
 | status values | open, doing, done | |
 | filters | all, open, doing, done | |
 | frontend tech | plain HTML + JavaScript | "html และ javascript ธรรมดา" |
@@ -93,7 +93,7 @@ Interpretation Q7: T01–T08 not listed in the pasted text → defined by us (se
 - mock data in frontend; seed data; login; delete; dashboard; CI/CD; cloud deploy
 
 ## Interpretations (pending student confirmation)
-- Q1 "mediem" → assume typo for `medium`
+- Q1 "mediem" → `medium` — **confirmed by student**
 - Q2 "ไม่ต้องมี 7 เมนู" → assume "no menu / navigation needed" (single page)
 - Q3 Backend/Docker details not given in Task 1 → wait for further tasks; meanwhile assume reference
   architecture (frontend nginx :8080 → /api → backend:8000, named volume /data) and REST:
